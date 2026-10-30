@@ -656,20 +656,22 @@ Two cases from the first pass are worth keeping in mind:
 
 - Every action is pinned to a full commit SHA (`# vX.Y.Z` comment) — resists
   tag-move attacks and satisfies Scorecard's Pinned-Dependencies check.
-  **One `uses:` is deliberately unpinned and cannot be pinned:**
-  `metrics.yml`'s `uses: ./.github/workflows/deploy-pages.yml`. GitHub rejects
-  `@ref` on a `./` path and resolves a local reusable workflow from the calling
-  run's own commit, which is tighter than a SHA pin. Not a gap — do not "fix" it.
+  **A local reusable workflow is the one `uses:` that cannot be pinned:**
+  GitHub rejects `@ref` on a `./` path and resolves it from the calling run's
+  own commit, which is tighter than a SHA pin. The call this applied to
+  (`metrics.yml` → `deploy-pages.yml`) is gone with the Pages deploy; the rule
+  stands if one is ever reintroduced.
 - `step-security/harden-runner` (egress-policy `audit`) on every workflow in
   `.github/workflows/`, except `pr-triage.yml`, which runs with a write token
   on fork activity and therefore uses `block` with an allowlist (the GitHub
-  API and the hosts setup-node downloads from). Two jobs deliberately go
-  without it, and neither is a gap:
-  `ci.yml`'s `build-and-test-required`, which only compares a `needs` result and
-  makes no network call, and `metrics.yml`'s `deploy-dashboard`, which is a call
-  into the local reusable `deploy-pages.yml` whose own job is hardened. In
-  `release.yml` the step is gated on `runner.os == 'Linux'`, because harden-runner
-  does not support the macOS and Windows legs of the build matrix.
+  API and the hosts setup-node downloads from). One job deliberately goes
+  without it, and it is not a gap: `ci.yml`'s `build-and-test-required`, which
+  only compares a `needs` result and makes no network call. `metrics.yml`'s
+  `deploy-dashboard` was the second — a call into the local reusable
+  `deploy-pages.yml` whose own job was hardened — and both are now removed
+  along with the Pages deploy. In `release.yml` the step is gated on
+  `runner.os == 'Linux'`, because harden-runner does not support the macOS and
+  Windows legs of the build matrix.
 - Least-privilege `permissions:` per workflow/job.
 - SBOM + SLSA provenance are attached to the published container image at push
   (`.github/workflows/docker-publish.yml`), alongside a report-only Trivy scan

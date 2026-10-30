@@ -769,6 +769,16 @@ pnpm --filter @backspace/metrics run vendor:check
 
 ### 10.5 Deploy wiring
 
+> **Fork note — the deploy described in this section does not exist in this
+> fork.** `.github/workflows/deploy-pages.yml` and `metrics.yml`'s
+> `deploy-dashboard` job were both removed. Pages was never enabled here, so
+> every deploy died at `actions/configure-pages`, and the version bump touches
+> `scripts/metrics/package.json`, which matches that workflow's
+> `scripts/metrics/**` filter — so every release bumped a red run into the
+> Actions tab for a site nobody published. The collection half (§1–§9) is
+> untouched and still runs upstream; everything below describes the upstream
+> wiring and is kept as the reference for reintroducing it.
+
 The dashboard is published by `.github/workflows/deploy-pages.yml`, reached two ways: a push to `main` touching `site/**`, `scripts/metrics/**` or the workflow file itself (a bundler change must redeploy, or the site silently serves stale data); and a `workflow_call` from `metrics.yml`'s `deploy-dashboard` job after a successful collection. Without the second path the collector would update `metrics-data` every night while the published `data.json` was rebuilt only when someone happened to push a site change.
 
 **The archive checkout is conditional and non-fatal.** `actions/checkout` asked for a ref that does not exist hard-fails the job, and no `if:` *inside* that step can rescue it — so the probe has to be a preceding step. An unconditional checkout would break every landing-page deploy until `metrics-data` was created, and permanently again if it were ever deleted.

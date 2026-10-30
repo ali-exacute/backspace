@@ -90,9 +90,8 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
 
-      # Three outcomes, not two — the same distinction deploy-pages.yml makes for
-      # the metrics branch. 0 means the tag is there, 2 means git reached the
-      # remote and found no such tag, and anything else is an unknown (auth,
+      # Three outcomes, not two. 0 means the tag is there, 2 means git reached
+      # the remote and found no such tag, and anything else is an unknown (auth,
       # network, renamed remote). Collapsing the last two into "absent" would cut
       # a second tag over one that already exists, and the release that follows
       # would land on the wrong commit.
