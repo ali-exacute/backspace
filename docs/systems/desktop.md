@@ -594,9 +594,11 @@ CI publishes via `.github/workflows/release.yml` (tag `v*` on the public repo).
 A `create-release` job runs first and creates the draft for the tag, then four
 native build jobs fan out (mac arm64+x64, win x64+arm64, linux x64, linux
 arm64), each uploading its installers, `.blockmap`s, and platform `latest*.yml`
-manifest into that one draft. The draft must be published manually, because
-drafts are invisible to electron-updater. Publishing it also starts the Flatpak
-metadata workflow above.
+manifest into that one draft. That draft is published by hand — drafts are
+invisible to electron-updater — unless the run came from
+`release-on-version-bump.yml`, which passes `publish=true` and lets the `publish`
+job un-draft the release once every matrix leg has uploaded. Publishing it also
+starts the Flatpak metadata workflow above.
 
 A release carries 16 assets, named
 `Backspace-<version>-<os>-<arch>.<ext>` (`artifactName` in
@@ -631,6 +633,32 @@ split across the pair, which needed manual consolidation before the release
 could be published. Creating the draft once, ahead of the matrix, leaves the
 build jobs with nothing to create.
 
+#### Starting a release from a version bump
+
+`.github/workflows/release-on-version-bump.yml` turns the version change that
+`scripts/bump-version.mjs` writes into a published release, with no tag cut by
+hand. It runs on a push to `main` that changes `package.json`, reads the version
+back out of it (or takes the `version` dispatch input), and cuts `v<version>` if
+that tag is absent. The tag probe repeats `deploy-pages.yml`'s three outcomes: `0`
+is present, `2` is "git reached the remote and no such tag exists", and anything
+else is an unknown that fails the job rather than being read as absent and
+cutting a second tag over one that exists.
+
+The tag is **not** left to `release.yml`'s `push: tags: v*` trigger, because
+events created with the repository's `GITHUB_TOKEN` do not start workflows.
+`workflow_dispatch` is the documented exception, so the last step dispatches
+`release.yml` on the tag with `publish=true`; that input is the only thing that
+switches on `release.yml`'s `publish` job, which edits the draft to a published
+`--latest` release after all four matrix legs have uploaded. A tag pushed by hand
+carries no inputs, so it still stops at the draft, which is what the "What's new"
+paragraph needs.
+
+Fork note: `publish.owner` / `publish.repo` in `electron-builder.yml` name the
+repository the installers are uploaded to. They are literals rather than
+`${env.…}` because electron-builder's macro expansion throws on an undefined
+variable and that config is resolved by local builds too, so a fork that ships
+its own builds must point them at itself — otherwise `--publish always` fails
+against a repository it cannot write to.
 
 ## Recovery Mode
 

@@ -37,7 +37,15 @@ npmRebuild: false
 afterPack: ./scripts/afterPack.js
 publish:
   - provider: github
-    owner: TheZwiss
+    # The repository `--publish always` uploads the installers to, and the one
+    # the packaged app's app-update.yml points electron-updater at. Upstream is
+    # TheZwiss/backspace; a fork that ships its own builds has to name itself
+    # here, or every upload fails against a repository it cannot write to.
+    #
+    # Literals rather than ${env.…} on purpose: electron-builder's macro
+    # expansion throws on an undefined variable, and this config is resolved by
+    # every local `pnpm build:desktop` as well as by the release workflow.
+    owner: ali-exacute
     repo: backspace
 protocols:
   - name: Backspace

@@ -4,6 +4,18 @@ on:
   push:
     tags:
       - 'v*'
+  # Manual start on an existing tag. `publish` is set by the version-bump
+  # automation (release-on-version-bump.yml), and it is deliberately not the
+  # default: a release cut by hand arrives here as a tag push and is published by
+  # hand after the "What's new" paragraph is written. Only a caller that asks for
+  # it skips that step.
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish the release once every build has uploaded (otherwise it stays a draft)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -357,3 +369,43 @@ jobs:
             echo "==> $app"
             codesign --verify --deep --strict --verbose=2 "$app"
           done
+
+  # Flip the draft to a published release. Only reached when a caller asks for it:
+  # `inputs.publish` is empty on a tag push, so the write-the-notes-then-publish
+  # flow stays exactly as it was.
+  #
+  # `--latest` is what puts the release at the top of the Releases section and
+  # moves the "Latest" badge. Without it GitHub leaves the badge on whichever
+  # release it last considered latest, which after a superseded release is the
+  # wrong one.
+  #
+  # `needs` covers the real gate: a failed or cancelled matrix leg skips this job
+  # instead of publishing a release with assets missing. No `actions/checkout` —
+  # this job only talks to the API and has no reason to put a token-bearing
+  # worktree on disk to do it.
+  publish:
+    needs: [create-release, build]
+    if: inputs.publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      # Re-entrant by design: editing an already-published release does not undo
+      # the publish, so a re-run of this job is harmless. It fails only when the
+      # release is missing outright, which is the one state where a red run is
+      # the honest answer.
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          gh release edit "$TAG" --draft=false --latest
+          gh release view "$TAG" --json url,tagName,assets \
+            --jq '"Published \(.tagName) at \(.url) with \(.assets | length) assets."'

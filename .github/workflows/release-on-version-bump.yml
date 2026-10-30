@@ -1,0 +1,156 @@
+name: Release on version bump
+
+# Turns a version change on main into a published desktop release, with no tag
+# cut by hand and nothing to click.
+#
+# The tag is not left to release.yml's `push: tags: v*` trigger, because events
+# created with the repository's GITHUB_TOKEN do not start workflows — a tag
+# pushed by this job would be invisible to that trigger. `workflow_dispatch` is
+# the documented exception, so the dispatch at the end is what actually starts
+# the build, and it is dispatched on the tag so release.yml's own
+# `github.ref_name` is the tag it must release.
+#
+# Nothing here assumes this repository is upstream: the tag is pushed to whatever
+# `origin` the checkout holds, and the dispatch addresses this repository's own
+# release.yml.
+#
+# Idempotent by design. A push that touches package.json without moving the
+# version finds the tag already present and stops. Re-running a release that died
+# after the tag was cut is what the `force` input is for.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (defaults to the version in package.json)'
+        required: false
+        type: string
+      force:
+        description: 'Start the release even if the tag already exists'
+        required: false
+        type: boolean
+        default: false
+
+# `contents: write` pushes the tag; `actions: write` is what the workflow
+# dispatch endpoint needs. The build itself holds its own scopes: it runs in
+# release.yml's run, not this one.
+permissions:
+  contents: write
+  actions: write
+
+# One at a time, never cancelled. Two runs racing over one version would dispatch
+# two full release builds; there is no state either could usefully interrupt.
+concurrency:
+  group: release-on-version-bump
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Tag and start the release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      # Full history and the default `persist-credentials: true`: the tag is
+      # created on HEAD and pushed back with the checkout's own token. The tag
+      # has to point at the commit that carries the bumped version, or the
+      # installers are built from a manifest that says something else.
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Resolve the version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+
+          version="${INPUT_VERSION:-}"
+          if [ -z "$version" ]; then
+            version="$(node -p "require('./package.json').version")"
+          fi
+
+          # Same rule as scripts/bump-version.mjs: a plain three-part release. A
+          # prerelease or build suffix is neither what bump-version.mjs writes
+          # nor what electron-builder and electron-updater expect of a tag.
+          if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::'$version' is not a release version. Expected three dot-separated numbers, for example 1.12.0."
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      # Three outcomes, not two — the same distinction deploy-pages.yml makes for
+      # the metrics branch. 0 means the tag is there, 2 means git reached the
+      # remote and found no such tag, and anything else is an unknown (auth,
+      # network, renamed remote). Collapsing the last two into "absent" would cut
+      # a second tag over one that already exists, and the release that follows
+      # would land on the wrong commit.
+      - name: Check whether the tag exists
+        id: tag
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          status=0
+          output="$(git ls-remote --exit-code --tags origin "refs/tags/$TAG" 2>&1)" || status=$?
+          case "$status" in
+            0)
+              echo 'present=true' >> "$GITHUB_OUTPUT"
+              echo "$TAG already exists — nothing to release."
+              ;;
+            2)
+              echo 'present=false' >> "$GITHUB_OUTPUT"
+              echo "$TAG does not exist yet — cutting it."
+              ;;
+            *)
+              printf '%s\n' "$output" >&2
+              echo "::error::git ls-remote could not reach origin (exit status $status). Refusing to read that as a missing tag."
+              exit 1
+              ;;
+          esac
+
+      - name: Create the tag
+        if: steps.tag.outputs.present == 'false'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          # actions/checkout configures credentials and safe.directory but no
+          # author identity, and `git tag --annotate` needs one. The bot identity
+          # is the same convention flatpak-release-metadata.yml uses, so the tag
+          # is attributable to automation rather than to whoever pushed.
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag --annotate "$TAG" --message "Backspace ${TAG#v}"
+          git push origin "refs/tags/$TAG"
+
+      # `--ref` a tag is load-bearing: it makes release.yml's `github.ref_name`
+      # the tag, so its `create-release` job writes a release for that tag and
+      # every matrix checkout lands on the version's commit, without release.yml
+      # needing to know this workflow exists.
+      #
+      # `publish=true` is what un-drafts it at the end of that run. Without it
+      # the release stays a draft, and a draft never appears in the Releases
+      # section.
+      - name: Start the release build on the tag
+        if: steps.tag.outputs.present == 'false' || inputs.force
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          gh workflow run release.yml --ref "$TAG" -F publish=true
+          echo "Started Release Desktop on $TAG."
