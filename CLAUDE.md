@@ -131,7 +131,7 @@ Data: `data/` at the repository root (backspace.db + uploads/ + backups/), mount
 
 **Config:** `packages/server/src/config.ts` reads env with defaults.
 
-**Dev:** `pnpm install && pnpm dev` → server :3005 + Vite :5173
+**Dev:** `pnpm install && pnpm dev` → server :3005 + Vite :5173. `node scripts/dev-local.mjs start` runs both plus the desktop shell against them (`--remote <origin>` adds a second web client proxying that instance); logs in `.dev-local/`.
 
 **Lint:** `pnpm lint` (ESLint flat config in `eslint.config.js`; violations that predate the lint step are counted in `eslint-suppressions.json`, so new ones fail the run)
 

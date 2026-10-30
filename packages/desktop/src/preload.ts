@@ -150,6 +150,13 @@ contextBridge.exposeInMainWorld('backspace', {
     ipcRenderer.on('keybind-action', handler);
     return () => { ipcRenderer.removeListener('keybind-action', handler); };
   },
+  // Recorder bridge: raw key events from the OS hook while a combo is captured.
+  setKeybindRecording: (active: boolean) => ipcRenderer.send('keybind-record-state', active),
+  onKeybindRecordEvent: (callback: (event: { code: string; pressed: boolean }) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, event: { code: string; pressed: boolean }) => callback(event);
+    ipcRenderer.on('keybind-record-event', handler);
+    return () => { ipcRenderer.removeListener('keybind-record-event', handler); };
+  },
   onAccessibilityStatus: (callback: (status: { trusted: boolean }) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, status: { trusted: boolean }) => callback(status);
     ipcRenderer.on('accessibility-status', handler);

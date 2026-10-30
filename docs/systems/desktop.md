@@ -976,6 +976,8 @@ Detection: `typeof window.backspace !== 'undefined'` (see `platform.ts:isElectro
 | `getCurrentActivity()` | invoke | R->M | Returns `Promise<Activity \| null>` |
 | `syncKeybinds(keybinds)` | fire | R->M | |
 | `onKeybindAction(cb)` | listen | M->R | Returns cleanup function |
+| `setKeybindRecording(active)` | fire | R->M | Optional. Turns native capture on/off while a settings row records |
+| `onKeybindRecordEvent(cb)` | listen | M->R | Optional. Raw `{ code, pressed }` from the OS hook; returns cleanup function |
 | `onAccessibilityStatus(cb)` | listen | M->R | Returns cleanup function |
 | `onKeybindHookError(cb)` | listen | M->R | Returns cleanup function |
 | `checkAccessibility()` | invoke | R->M | Returns `Promise<boolean>` |
@@ -1165,6 +1167,24 @@ version. The normal filesystem session socket works through Node's built-in net
 transport; legacy abstract sockets requiring the optional addon report the portal
 as unavailable. Regenerate Flatpak's offline sources after lockfile changes.
 
+### Recorder bridge (settings capture)
+
+The Settings → Keybinds recorder is a renderer concern, but the renderer does not
+see every global key: Windows menu activation consumes the Alt keyup, and macOS
+keeps Cmd to itself. The hook that will actually fire the saved binding is the
+authoritative source, so it also feeds the capture.
+
+`setRecording(active)` (`keybind-record-state` IPC) starts uiohook on demand — a
+user may be recording the first binding, so the hook must run without a synced
+configuration — and while active forwards every mapped key to the renderer as
+`keybind-record-event { code, pressed }`, in the same DOM-code vocabulary the
+recorder stores (`uiohookKeycodeToDomCode`). Clearing the last binding while a row
+still records keeps the hook alive (`updateKeybinds` only stops it when nothing is
+recording); leaving recording stops a hook that no binding needs. Unmapped
+keycodes are not forwarded — the DOM path still captures them. On Wayland the
+method is a no-op: assignments live in the system portal and the panel has no
+recorder.
+
 ### Native Keycode to DOM Code Mapping
 
 uIOhook reports hardware scan codes. The web UI stores keybinds as djb2 hashes of DOM `KeyboardEvent.code` strings. The `UIOHOOK_TO_DOM_CODE` lookup table bridges the two.
@@ -1294,6 +1314,29 @@ interface Keybind {
 
 **Conflict detection:** `findConflict(keys, mouseButton?, excludeActionId?)` checks for exact key+mouse match against existing bindings.
 
+### Recorder and capture rules (`KeybindsPanel.tsx`)
+
+- **Modifier-only combos are valid bindings.** A capture is accepted as soon as it
+  holds at least one key or a mouse button; `Alt`, `Ctrl+Shift`, `Cmd` and friends
+  are stored like any other combo. `MODIFIER_CODES` gates nothing any more — the
+  only rejection is an empty capture (a keyup for a key that was already held when
+  recording started), which keeps the recorder listening.
+- **Modifiers are per-side.** `AltLeft` and `AltRight` are different bindings, so
+  binding the left Alt does not make AltGr (right Alt, used for `@`/`€` on Windows
+  layouts) a push-to-talk trigger while typing.
+- **Overlaps are allowed.** Only exact duplicates conflict. A lone `Alt` binding
+  plus `Alt + M` both fire on `Alt + M`; the settings note says so.
+- **Both capture sources feed one map.** DOM `keydown`/`keyup` and, in the desktop,
+  the native hook's `keybind-record-event` write into the same `code`-keyed map, so
+  duplicate delivery collapses. The native source covers keys the renderer never
+  sees (Alt keyup on Windows, Cmd on macOS).
+- **Finalize:** 300 ms after the last keyup; a mouse button finalizes immediately.
+  Escape cancels.
+- **Live dispatch is suspended while capturing.** The panel sets
+  `keybindCaptureStore.capturingFor`; `dispatchKeybindAction()` returns early while
+  it is set, so re-recording a bound combo cannot drop the user out of a call.
+  `keybindCaptureStore.ts` is deliberately not persisted.
+
 ### Bindable Actions
 
 | Action ID | Label | Type |
@@ -1327,7 +1370,7 @@ Three parallel systems:
 
 ### Action Dispatch (`dispatchKeybindAction()`)
 
-Only dispatches when user is in a voice channel (`currentVoiceChannelId` exists).
+Only dispatches when user is in a voice channel (`currentVoiceChannelId` exists) and the settings recorder is not capturing (`keybindCaptureStore.capturingFor` empty).
 
 Checks space mute/deafen enforcement state before dispatching mute/deafen actions (see `voice.md` for voice moderation details).
 

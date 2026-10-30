@@ -299,7 +299,8 @@
     },
     "title": "Tastenkürzel",
     "note": {
-      "webOnly": "Tastenkürzel funktionieren, solange dieser Tab im Vordergrund ist. Für globale Tastenkürzel, die auch in anderen Apps gelten, nutze die Desktop-App."
+      "webOnly": "Tastenkürzel funktionieren, solange dieser Tab im Vordergrund ist. Für globale Tastenkürzel, die auch in anderen Apps gelten, nutze die Desktop-App.",
+      "modifierOnly": "Eine Modifikatortaste (Alt, Strg, Umschalt, Cmd/Win) kann allein belegt werden. Sie löst bei jedem Drücken aus, daher laufen bei einer Überschneidung mit einem anderen Kürzel beide Aktionen."
     },
     "section": {
       "voice": "Sprach-Tastenkürzel"

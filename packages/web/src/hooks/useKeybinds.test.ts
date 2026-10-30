@@ -1,6 +1,7 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useKeybindStore } from '../stores/keybindStore';
+import { useKeybindCaptureStore } from '../stores/keybindCaptureStore';
 import { useKeybinds } from './useKeybinds';
 
 const mock = vi.hoisted(() => ({
@@ -35,6 +36,7 @@ const sync = vi.fn();
 beforeEach(() => {
   vi.clearAllMocks();
   sync.mockResolvedValue(true);
+  useKeybindCaptureStore.setState({ capturingFor: null });
   useKeybindStore.setState({ keybinds: [binding] });
   window.backspace = {
     syncKeybinds: sync,
@@ -140,5 +142,66 @@ describe('global shortcut renderer bridge', () => {
       window.dispatchEvent(new Event('blur'));
     });
     expect(mock.voice.setMuted.mock.calls).toEqual([[false], [true]]);
+  });
+  it('fires a lone modifier binding on press and release', () => {
+    delete window.backspace;
+    const now = vi.spyOn(Date, 'now').mockReturnValue(4_000_000_000_000);
+    try {
+      useKeybindStore.setState({
+        keybinds: [{ actionId: 'pushToTalk', keys: [hash('AltLeft')], displayLabel: 'Alt' }],
+      });
+      renderHook(() => useKeybinds());
+      mock.voice.setMuted.mockClear();
+
+      act(() => {
+        window.dispatchEvent(new KeyboardEvent('keydown', { code: 'AltLeft', key: 'Alt' }));
+      });
+      expect(mock.voice.setMuted).toHaveBeenCalledWith(false);
+
+      act(() => {
+        window.dispatchEvent(new KeyboardEvent('keyup', { code: 'AltLeft', key: 'Alt' }));
+      });
+      expect(mock.voice.setMuted).toHaveBeenLastCalledWith(true);
+    } finally {
+      now.mockRestore();
+    }
+  });
+  it('ignores bindings while the settings recorder owns the keyboard', () => {
+    delete window.backspace;
+    const now = vi.spyOn(Date, 'now').mockReturnValue(5_000_000_000_000);
+    try {
+      renderHook(() => useKeybinds());
+      mock.voice.setMuted.mockClear();
+
+      act(() => useKeybindCaptureStore.setState({ capturingFor: 'toggleMute' }));
+      act(() => {
+        window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyV', key: 'v' }));
+        window.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyV', key: 'v' }));
+      });
+      expect(mock.voice.setMuted).not.toHaveBeenCalled();
+
+      act(() => useKeybindCaptureStore.setState({ capturingFor: null }));
+      act(() => {
+        window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyV', key: 'v' }));
+      });
+      expect(mock.voice.setMuted).toHaveBeenCalledWith(false);
+    } finally {
+      now.mockRestore();
+    }
+  });
+  it('also ignores native hook actions while recording', async () => {
+    const now = vi.spyOn(Date, 'now').mockReturnValue(6_000_000_000_000);
+    try {
+      await act(async () => { renderHook(() => useKeybinds()); });
+      mock.voice.setMuted.mockClear();
+      act(() => useKeybindCaptureStore.setState({ capturingFor: 'toggleMute' }));
+      act(() => actionListener({ actionId: 'pushToTalk', pressed: true }));
+      expect(mock.voice.setMuted).not.toHaveBeenCalled();
+      act(() => useKeybindCaptureStore.setState({ capturingFor: null }));
+      act(() => actionListener({ actionId: 'pushToTalk', pressed: true }));
+      expect(mock.voice.setMuted).toHaveBeenCalledWith(false);
+    } finally {
+      now.mockRestore();
+    }
   });
 });

@@ -299,7 +299,8 @@
     },
     "title": "Keybinds",
     "note": {
-      "webOnly": "Shortcuts work while this tab is focused. For global shortcuts that work in other apps, use the desktop app."
+      "webOnly": "Shortcuts work while this tab is focused. For global shortcuts that work in other apps, use the desktop app.",
+      "modifierOnly": "A modifier key (Alt, Ctrl, Shift, Cmd/Win) can be bound on its own. It fires every time that key is pressed, so if another shortcut shares it, both actions run."
     },
     "section": {
       "voice": "Voice Shortcuts"

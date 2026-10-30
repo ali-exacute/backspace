@@ -946,6 +946,11 @@ function registerIpcHandlers(): void {
     keybindManager.refreshPortal();
     return keybindManager.getPortalStatus();
   });
+  // The renderer recorder needs raw keys from the OS hook: some keys (Alt keyup
+  // on Windows, Cmd on macOS) never reach the DOM.
+  ipcMain.on('keybind-record-state', (_event, active: unknown) => {
+    keybindManager.setRecording(active === true);
+  });
   ipcMain.on('keybind-portal-retry', () => keybindManager.retryPortal());
 
   ipcMain.handle('check-accessibility', () => {

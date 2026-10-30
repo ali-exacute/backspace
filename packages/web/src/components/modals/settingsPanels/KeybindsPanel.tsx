@@ -2,17 +2,13 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useKeybindStore, BINDABLE_ACTIONS, Keybind } from '../../../stores/keybindStore';
+import { useKeybindCaptureStore } from '../../../stores/keybindCaptureStore';
 import { isElectron, isElectronMac } from '../../../platform/platform';
 import { useKeybindPortalStatus } from '../../../hooks/useKeybindPortalStatus';
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-
-const MODIFIER_CODES = new Set([
-  'ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight',
-  'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight',
-]);
 
 const MOUSE_BUTTON_MAP: Record<number, number> = { 1: 3, 3: 4, 4: 5 };
 
@@ -42,6 +38,19 @@ function keyDisplayName(t: SettingsT, code: string, key: string): string {
   if (key === ' ') return t('keybinds.key.space');
   return key.length === 1 ? key.toUpperCase() : key;
 }
+
+/**
+ * A `key` value for codes that arrive from the native hook, which only knows
+ * the DOM code. Mirrors what the browser would report for the same key.
+ */
+function keyFromCode(code: string): string {
+  if (code.startsWith('Key')) return code.slice(3).toLowerCase();
+  if (code.startsWith('Digit')) return code.slice(5);
+  if (/^Numpad\d$/.test(code)) return code.slice(6);
+  if (code === 'Space') return ' ';
+  return code;
+}
+
 
 function codeToNumeric(code: string): number {
   // djb2 hash — produces unique numeric IDs for all KeyboardEvent.code values
@@ -146,6 +155,7 @@ export function KeybindsPanel() {
   const [recordingActionId, setRecordingActionId] = useState<string | null>(null);
   const [recordingDisplay, setRecordingDisplay] = useState('');
   const [conflict, setConflict] = useState<ConflictInfo | null>(null);
+  const setCapturingFor = useKeybindCaptureStore((s) => s.setCapturingFor);
 
   const [accessibilityTrusted, setAccessibilityTrusted] = useState<boolean | null>(null);
   const [hookError, setHookError] = useState<string | null>(null);
@@ -208,8 +218,9 @@ export function KeybindsPanel() {
     }
     const displayLabel = displayParts.join(' + ');
 
-    const hasNonModifier = Array.from(codes.keys()).some((code) => !MODIFIER_CODES.has(code));
-    if (!hasNonModifier && !mouseBtn) {
+    // Nothing captured — e.g. the keyup of a key that was already held when
+    // recording started. Stay in recording mode instead of saving an empty bind.
+    if (keys.length === 0 && !mouseBtn) {
       return;
     }
 
@@ -226,7 +237,36 @@ export function KeybindsPanel() {
     cancelRecording();
   }, [findConflict, setKeybind, cancelRecording, t]);
 
-  // --- Recording event listeners ---
+  /**
+   * Add a pressed key to the capture. Modifier keys are bindable on their own
+   * (Alt, Ctrl+Shift, …): the recorder does not require a "regular" key, it
+   * only needs at least one key or a mouse button before saving.
+   */
+  const addCode = useCallback((code: string, key: string) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+
+    pressedCodesRef.current.set(code, {
+      numeric: codeToNumeric(code),
+      display: keyDisplayName(t, code, key),
+    });
+
+    const parts = Array.from(pressedCodesRef.current.values()).map((c) => c.display);
+    if (mouseDisplayRef.current) parts.push(mouseDisplayRef.current);
+    setRecordingDisplay(parts.join(' + '));
+  }, [t]);
+
+  /** The combo is complete once nothing new has been pressed for a moment. */
+  const scheduleFinalize = useCallback(() => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      if (recordingActionId) finalizeRecording(recordingActionId);
+    }, 300);
+  }, [recordingActionId, finalizeRecording]);
+
+  // --- Recording event listeners (DOM path) ---
   useEffect(() => {
     if (portal || !recordingActionId) return;
 
@@ -239,28 +279,13 @@ export function KeybindsPanel() {
         return;
       }
 
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-        debounceTimerRef.current = null;
-      }
-
-      const display = keyDisplayName(t, e.code, e.key);
-      const numeric = codeToNumeric(e.code);
-      pressedCodesRef.current.set(e.code, { numeric, display });
-
-      const parts = Array.from(pressedCodesRef.current.values()).map((c) => c.display);
-      if (mouseDisplayRef.current) parts.push(mouseDisplayRef.current);
-      setRecordingDisplay(parts.join(' + '));
+      addCode(e.code, e.key);
     }
 
     function onKeyUp(e: KeyboardEvent) {
       e.preventDefault();
       e.stopPropagation();
-
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-      debounceTimerRef.current = setTimeout(() => {
-        if (recordingActionId) finalizeRecording(recordingActionId);
-      }, 300);
+      scheduleFinalize();
     }
 
     function onMouseDown(e: MouseEvent) {
@@ -296,7 +321,36 @@ export function KeybindsPanel() {
       window.removeEventListener('mousedown', onMouseDown, true);
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
-  }, [recordingActionId, cancelRecording, finalizeRecording, t, portal]);
+  }, [recordingActionId, cancelRecording, finalizeRecording, addCode, scheduleFinalize, t, portal]);
+
+  // --- Recording event listeners (native hook, desktop only) ---
+  // The renderer does not see every global key: Windows menu activation eats the
+  // Alt keyup, macOS keeps Cmd to itself. The desktop's own hook is what will
+  // fire the saved binding, so it also feeds the recorder. Both sources write
+  // into the same code-keyed map, so duplicate delivery collapses there.
+  useEffect(() => {
+    if (portal || !recordingActionId || !isElectron()) return;
+    const api = window.backspace;
+    if (!api?.setKeybindRecording || !api?.onKeybindRecordEvent) return;
+
+    api.setKeybindRecording(true);
+    const cleanup = api.onKeybindRecordEvent(({ code, pressed }) => {
+      if (pressed) addCode(code, keyFromCode(code));
+      else scheduleFinalize();
+    });
+
+    return () => {
+      cleanup();
+      window.backspace?.setKeybindRecording?.(false);
+    };
+  }, [recordingActionId, addCode, scheduleFinalize, portal]);
+
+  // While a row records, its key presses belong to the capture and must not
+  // also run the action they are currently bound to.
+  useEffect(() => {
+    setCapturingFor(recordingActionId);
+    return () => setCapturingFor(null);
+  }, [recordingActionId, setCapturingFor]);
 
   // --- Conflict resolution ---
   const confirmConflict = () => {
@@ -386,6 +440,11 @@ export function KeybindsPanel() {
           {t('keybinds.note.webOnly')}
         </div>
       )}
+
+      {/* Modifier-only note */}
+      <div className="text-xs text-txt-tertiary px-1">
+        {t('keybinds.note.modifierOnly')}
+      </div>
 
       {/* Keybind rows */}
       <div>

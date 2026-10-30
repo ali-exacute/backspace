@@ -7,6 +7,13 @@ import { devCspPreamble } from './src/build/devCsp';
 import { preloadStartupChunks } from './src/build/startupChunks';
 import { PRECACHE_GLOB_PATTERNS, PRECACHE_MAX_FILE_BYTES } from './src/build/precache';
 
+// Dev server only. The proxy normally targets the local server on :3005;
+// BACKSPACE_DEV_API points it at any other instance (e.g. a deployed one) so
+// `pnpm dev:web` can run the current frontend against real data:
+//   $env:BACKSPACE_DEV_API = 'https://chat.example'
+const devApiOrigin = (process.env.BACKSPACE_DEV_API || 'http://localhost:3005').replace(/\/+$/, '');
+const devWsOrigin = devApiOrigin.replace(/^http/, 'ws');
+
 export default defineConfig({
   plugins: [
     devCspPreamble(),
@@ -65,11 +72,12 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:3005',
+        target: devApiOrigin,
         changeOrigin: true,
       },
       '/ws': {
-        target: 'ws://localhost:3005',
+        target: devWsOrigin,
+        changeOrigin: true,
         ws: true,
       },
     },

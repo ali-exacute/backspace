@@ -170,6 +170,38 @@ pnpm dev              # API server on :3005, Vite dev server on :5173
 ```
 
 You can run the two halves separately with `pnpm dev:server` and `pnpm dev:web`.
+`pnpm dev:web` proxies `/api` and `/ws` to `http://localhost:3005`; set
+`BACKSPACE_DEV_API` to another origin to run the current frontend against a
+deployed instance instead (`BACKSPACE_DEV_API=https://chat.example pnpm dev:web`).
+
+### Local stack + desktop app in one command
+
+`node scripts/dev-local.mjs start` runs the whole local loop: it writes a `.env`
+on first run (generated `JWT_SECRET`), starts the API server (:3005) and the web
+client (:5173), then launches the Electron shell pointed at the dev server.
+`--remote https://your.instance` also serves this checkout's frontend on :5174
+with `/api` and `/ws` proxied to that instance, so you get your local UI against
+real data, accounts and voice; `--no-desktop` skips the shell.
+`node scripts/dev-local.mjs status` reports what is up, and
+`node scripts/dev-local.mjs stop` shuts everything down, Electron included — it
+targets this checkout's dev processes, so a manually started `pnpm dev` goes
+too. State and logs land in `.dev-local/`, and `stop` needs no state file: it
+rediscovers the live processes by port and by repository path.
+
+Four things that are easy to lose an hour on:
+
+- **Load `http://127.0.0.1:5173`, not `localhost`.** Vite's default `localhost`
+  bind lands on `::1`, and on Windows that loopback refuses connections, so the
+  dev server looks dead and the shell loads a blank window. The helper passes
+  `--host 127.0.0.1` for exactly this reason.
+- **The shell only runs your code when it loads the dev server.** Pointed at a
+  deployed instance it renders that server's build instead; `BACKSPACE_URL` is
+  what switches it.
+- **The dev shell shares its userData directory** — and therefore the
+  single-instance lock and the saved instance URL — with an installed build.
+  Quit one before starting the other.
+- **Voice needs LiveKit.** Without `LIVEKIT_*` you can configure keybinds but
+  they will not act, because the action handlers require a voice channel.
 
 Working on the **desktop** app additionally needs a C++ toolchain (`make`, `g++`,
 `python3`) to build the native `uiohook-napi` module. On Debian/Ubuntu:

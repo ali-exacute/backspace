@@ -67,6 +67,11 @@ for (const [keycode, domCode] of Object.entries(UIOHOOK_TO_DOM_CODE)) {
   UIOHOOK_TO_HASH.set(Number(keycode), djb2(domCode));
 }
 
+/** Native keycode → DOM `KeyboardEvent.code`, for the keybind recorder. */
+export function uiohookKeycodeToDomCode(keycode: number): string | undefined {
+  return UIOHOOK_TO_DOM_CODE[keycode];
+}
+
 interface KeybindConfig {
   actionId: string;
   keys: number[];
@@ -79,6 +84,7 @@ export class KeybindManager {
   private activeActions = new Set<string>();
   private window: BrowserWindow | null = null;
   private started = false;
+  private recording = false;
   private hook?: typeof import('uiohook-napi').uIOhook;
   private portal?: GlobalShortcutsPortal;
   private portalRegistered = false;
@@ -157,10 +163,29 @@ export class KeybindManager {
     if (keybinds.length > 0 && !this.started) {
       this.start();
     }
-    if (keybinds.length === 0 && this.started) {
-      this.stop();
+    // A recording session also needs the hook while no binding exists yet.
+    if (keybinds.length === 0 && this.started && !this.recording) {
+      this.stopHook();
     }
   }
+
+  /**
+   * The settings recorder needs raw key events even when nothing is bound yet,
+   * and even for keys the renderer never sees (the OS menu activation swallows
+   * Alt keyup on Windows; macOS keeps Cmd). While recording, every mapped key
+   * is forwarded to the renderer as a DOM code, the same vocabulary the
+   * recorder stores. Wayland assignments live in the system portal, so there is
+   * nothing to capture here.
+   */
+  setRecording(active: boolean): void {
+    if (this.portalStatus) return;
+    if (this.recording === active) return;
+    this.recording = active;
+    if (active && !this.started) this.start();
+    if (!active && this.started && this.keybinds.length === 0) this.stopHook();
+  }
+
+  isRecording(): boolean { return this.recording; }
 
   private start(): void {
     if (this.started) return;
@@ -190,7 +215,13 @@ export class KeybindManager {
     this.portal?.stop();
     this.portal = undefined;
     this.keybinds = [];
+    this.recording = false;
     if (this.portalStatus) this.sendPortalStatus({ state: 'idle', shortcuts: {} });
+    this.stopHook();
+  }
+
+  /** Release everything the native hook is holding and stop it. */
+  private stopHook(): void {
     if (!this.started) return;
     for (const actionId of this.activeActions) {
       this.sendAction(actionId, false);
@@ -215,16 +246,18 @@ export class KeybindManager {
   }
 
   private onKeyDown(e: UiohookKeyboardEvent): void {
-    const hash = UIOHOOK_TO_HASH.get(e.keycode);
-    if (hash === undefined) return; // unmapped key — ignore
-    this.pressedKeys.add(hash);
+    const code = UIOHOOK_TO_DOM_CODE[e.keycode];
+    if (code === undefined) return; // unmapped key — ignore
+    if (this.recording) this.sendRecordEvent(code, true);
+    this.pressedKeys.add(UIOHOOK_TO_HASH.get(e.keycode)!);
     this.evaluateKeybinds();
   }
 
   private onKeyUp(e: UiohookKeyboardEvent): void {
-    const hash = UIOHOOK_TO_HASH.get(e.keycode);
-    if (hash === undefined) return;
-    this.pressedKeys.delete(hash);
+    const code = UIOHOOK_TO_DOM_CODE[e.keycode];
+    if (code === undefined) return;
+    if (this.recording) this.sendRecordEvent(code, false);
+    this.pressedKeys.delete(UIOHOOK_TO_HASH.get(e.keycode)!);
     this.checkReleases();
   }
 
@@ -287,6 +320,11 @@ export class KeybindManager {
   private sendAction(actionId: string, pressed: boolean): void {
     if (!this.window || this.window.isDestroyed()) return;
     this.window.webContents.send('keybind-action', { actionId, pressed });
+  }
+
+  private sendRecordEvent(code: string, pressed: boolean): void {
+    if (!this.window || this.window.isDestroyed()) return;
+    this.window.webContents.send('keybind-record-event', { code, pressed });
   }
 
   private sendAccessibilityStatus(trusted: boolean): void {

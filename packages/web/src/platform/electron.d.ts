@@ -182,6 +182,9 @@ interface BackspaceElectronAPI {
   // Older installed shells use send-based IPC and return void.
   syncKeybinds: (keybinds: Array<{ actionId: string; keys: number[]; mouseButton?: number }>) => Promise<boolean> | void;
   onKeybindAction: (callback: (action: { actionId: string; pressed: boolean }) => void) => (() => void);
+  // Optional: older installed shells predate the recorder bridge.
+  setKeybindRecording?: (active: boolean) => void;
+  onKeybindRecordEvent?: (callback: (event: { code: string; pressed: boolean }) => void) => (() => void);
   onAccessibilityStatus: (callback: (status: { trusted: boolean }) => void) => (() => void);
   onKeybindHookError: (callback: (error: { message: string }) => void) => (() => void);
   checkAccessibility: () => Promise<boolean>;

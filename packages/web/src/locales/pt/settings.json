@@ -300,7 +300,8 @@
     },
     "title": "Atalhos",
     "note": {
-      "webOnly": "Os atalhos funcionam enquanto esta aba estiver em foco. Para atalhos globais que funcionam em outros apps, use o app para desktop."
+      "webOnly": "Os atalhos funcionam enquanto esta aba estiver em foco. Para atalhos globais que funcionam em outros apps, use o app para desktop.",
+      "modifierOnly": "Uma tecla modificadora (Alt, Ctrl, Shift, Cmd/Win) pode ser associada sozinha. Ela dispara sempre que essa tecla é pressionada, então, se outro atalho a compartilhar, as duas ações são executadas."
     },
     "section": {
       "voice": "Atalhos de voz"

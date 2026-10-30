@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { BrowserWindow } from 'electron';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { KeybindManager } from './keybindManager';
+import { KeybindManager, uiohookKeycodeToDomCode } from './keybindManager';
 import type { PortalKeybindStatus } from './portalShortcut';
 
 const mocks = vi.hoisted(() => ({ userData: '', clients: [] as Array<{
@@ -106,5 +106,23 @@ describe('Wayland keybind manager', () => {
     expect(mocks.clients).toHaveLength(3);
     manager.stop();
     expect(mocks.clients[2]!.stop).toHaveBeenCalledOnce();
+  });
+});
+
+describe('keybind recorder bridge', () => {
+  it('maps native modifier keycodes to their DOM codes', () => {
+    expect(uiohookKeycodeToDomCode(56)).toBe('AltLeft');
+    expect(uiohookKeycodeToDomCode(3640)).toBe('AltRight');
+    expect(uiohookKeycodeToDomCode(29)).toBe('ControlLeft');
+    expect(uiohookKeycodeToDomCode(3613)).toBe('ControlRight');
+    expect(uiohookKeycodeToDomCode(42)).toBe('ShiftLeft');
+    expect(uiohookKeycodeToDomCode(3675)).toBe('MetaLeft');
+    expect(uiohookKeycodeToDomCode(999999)).toBeUndefined();
+  });
+  it('leaves capture to the system portal on Wayland', () => {
+    const { manager } = setup();
+    manager.setRecording(true);
+    expect(manager.isRecording()).toBe(false);
+    manager.stop();
   });
 });

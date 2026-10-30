@@ -22,6 +22,9 @@ data/
 .env.*
 !.env.example
 
+# Local dev loop scratch (scripts/dev-local.mjs): logs and pids
+/.dev-local/
+
 # Credentials / private keys (defense-in-depth; none should ever be committed)
 *.pem
 *.key

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useKeybindStore, Keybind } from '../stores/keybindStore';
+import { useKeybindCaptureStore } from '../stores/keybindCaptureStore';
 import { useVoiceStore } from '../stores/voiceStore';
 import { isElectron } from '../platform/platform';
 import { toggleMuteFromControl, toggleDeafenFromControl, handleCameraAction, handleScreenShareAction, handleDisconnectAction } from '../utils/voiceActions';
@@ -15,6 +16,10 @@ const lastDispatch: Record<string, number> = {};
 
 /** Dispatch a keybind action to the appropriate voice handler */
 function dispatchKeybindAction(actionId: string, pressed: boolean, deduplicate = true): void {
+  // The settings recorder owns the keyboard while it captures a combo: those
+  // presses configure the binding, they must not also run it.
+  if (useKeybindCaptureStore.getState().capturingFor) return;
+
   const now = Date.now();
   const key = `${actionId}:${pressed}`;
   if (deduplicate && now - (lastDispatch[key] || 0) < 100) return;
