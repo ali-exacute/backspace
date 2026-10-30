@@ -54,6 +54,12 @@ describe('ProfileBio', () => {
     expect(many).toBe(one);
   });
 
+  it('lets each paragraph derive its own base direction', () => {
+    const { container } = render(<ProfileBio bio={'مرحبا hello\n\nhello مرحبا'} />);
+
+    expect(paragraphs(container).map((p) => p.getAttribute('dir'))).toEqual(['auto', 'auto']);
+  });
+
   it('renders Discord shortcode names once they are loaded (issue #252)', async () => {
     await loadEmojiShortcodeNames();
     const { container } = render(<ProfileBio bio={'est.:cross: :heart_on_fire:\n\n-Catholic :cross: :flag_va: :orthodox_cross:'} />);

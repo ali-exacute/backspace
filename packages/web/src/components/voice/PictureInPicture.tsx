@@ -447,7 +447,7 @@ export function PictureInPicture() {
               <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M11 5L6 9H2V15H6L11 19V5ZM15.54 8.46C16.48 9.4 17 10.67 17 12S16.48 14.6 15.54 15.54L14.12 14.12C14.69 13.55 15 12.79 15 12S14.69 10.45 14.12 9.88L15.54 8.46Z" />
               </svg>
-              <span className="text-sm font-medium">{channelName}</span>
+              <span className="text-sm font-medium"><bdi>{channelName}</bdi></span>
             </div>
           )}
         </div>
@@ -474,12 +474,12 @@ export function PictureInPicture() {
       {/* Bottom overlay with name */}
       <div className="absolute bottom-0 left-0 right-0 px-3 py-2 bg-gradient-to-t from-black/70 to-transparent">
         <div className="flex items-center gap-1.5">
-          <span className="text-white text-xs font-semibold truncate">{displayName}</span>
+          <span className="text-white text-xs font-semibold truncate"><bdi>{displayName}</bdi></span>
           {displayParticipant && speakingParticipantIds.has(displayParticipant.identity) && (
             <div className="w-2 h-2 rounded-full bg-status-online flex-shrink-0 animate-pulse" />
           )}
         </div>
-        <div className="text-white/50 text-[10px] truncate">{channelName}</div>
+        <div className="text-white/50 text-[10px] truncate"><bdi>{channelName}</bdi></div>
       </div>
 
       {/* Expand icon hint (bottom-right) */}

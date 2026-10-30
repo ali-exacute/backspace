@@ -191,12 +191,12 @@ export function UserProfilePopout({ user: propUser, origin, onClose, anchor, pla
         {/* Name & info */}
         <div>
           <ProfileSpaceNickname member={member} />
-          <span className="text-[16px] font-semibold leading-tight">{displayName}</span>
+          <span className="text-[16px] font-semibold leading-tight"><bdi>{displayName}</bdi></span>
           <div className="text-[13px] text-txt-tertiary">
             <Username username={user.username} showAt className="text-[13px] text-txt-tertiary" />
           </div>
           {user.customStatus && (
-            <div className="text-[13px] text-txt-secondary italic mt-1">
+            <div dir="auto" className="text-[13px] text-txt-secondary italic mt-1">
               {replaceEmojiShortcodes(user.customStatus)}
             </div>
           )}

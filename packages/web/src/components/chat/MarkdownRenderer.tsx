@@ -88,7 +88,7 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
   // 'text' means a bare fenced block with no language — render without highlighting
   if (language === 'text') {
     return (
-      <pre className="mt-1 p-3 bg-surface-elevated border border-white/[0.06] rounded text-[0.875rem] leading-[1.125rem] font-mono overflow-x-auto whitespace-pre">
+      <pre dir="ltr" className="mt-1 p-3 bg-surface-elevated border border-white/[0.06] rounded text-[0.875rem] leading-[1.125rem] font-mono overflow-x-auto whitespace-pre">
         <code>{code}</code>
       </pre>
     );
@@ -98,6 +98,7 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
     <Highlight theme={aetherTheme} code={code} language={language}>
       {({ style, tokens, getLineProps, getTokenProps }) => (
         <pre
+          dir="ltr"
           className="mt-1 rounded border border-white/[0.06] text-[0.875rem] leading-[1.125rem] font-mono overflow-x-auto"
           style={{ ...style, padding: '0.625rem 0.75rem', margin: 0 }}
         >
@@ -141,8 +142,13 @@ function ChannelMentionBadge({ userId }: { userId: string }) {
 
 function buildComponents(): Components {
   return {
-    // Paragraphs → spans to avoid block nesting issues in chat messages
-    p: ({ children }) => <span className="block">{children}</span>,
+    // Paragraphs → spans to avoid block nesting issues in chat messages.
+    // `dir="auto"` gives each paragraph its own base direction (and so its own
+    // alignment) from its first strong character: a message that mixes Arabic
+    // or Hebrew with Latin text reads in the order it was written instead of
+    // the UI language's left-to-right base. See docs/systems/design-system.md,
+    // "Bidirectional text".
+    p: ({ children }) => <span dir="auto" className="block">{children}</span>,
 
     // Links & Mentions
     // remark-parse autolinks <@userId> into mailto:@userId before plugins run,
@@ -163,6 +169,7 @@ function buildComponents(): Components {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
+          dir="auto"
           className="text-txt-link hover:underline"
         >
           {children}
@@ -177,9 +184,11 @@ function buildComponents(): Components {
         const code = String(children).replace(/\n$/, '');
         return <MemoizedCodeBlock language={match[1]!} code={code} />;
       }
-      // Inline code
+      // Inline code. `dir="ltr"` keeps a snippet in the order it was typed and
+      // isolates it from a surrounding RTL sentence.
       return (
         <code
+          dir="ltr"
           className="px-[6px] py-px bg-[#111115] border border-border-soft rounded text-[13.5px] font-mono text-accent-lavender"
           {...rest}
         >
@@ -196,22 +205,24 @@ function buildComponents(): Components {
     em: ({ children }) => <em className="italic">{children}</em>,
     del: ({ children }) => <del className="line-through text-txt-secondary">{children}</del>,
 
-    // Blockquotes
+    // Blockquotes. The bar and the inset are logical (`border-s`, `ps`) so
+    // they follow the quote's own direction rather than staying on the left.
     blockquote: ({ children }) => (
-      <blockquote className="pl-3 border-l-[3px] border-interactive-muted my-0.5">
+      <blockquote dir="auto" className="ps-3 border-s-[3px] border-interactive-muted my-0.5">
         {children}
       </blockquote>
     ),
 
-    // Lists
-    ul: ({ children }) => <ul className="list-disc pl-6 my-0.5 space-y-0.5">{children}</ul>,
-    ol: ({ children }) => <ol className="list-decimal pl-6 my-0.5 space-y-0.5">{children}</ol>,
+    // Lists. The list carries the direction so its markers and their inset
+    // stay on the same side; a nested paragraph inherits it.
+    ul: ({ children }) => <ul dir="auto" className="list-disc ps-6 my-0.5 space-y-0.5">{children}</ul>,
+    ol: ({ children }) => <ol dir="auto" className="list-decimal ps-6 my-0.5 space-y-0.5">{children}</ol>,
     li: ({ children }) => <li>{children}</li>,
 
     // Headings — Discord renders these with slightly larger/bolder text
-    h1: ({ children }) => <div className="text-[1.5rem] font-bold text-txt-primary mt-2 mb-1">{children}</div>,
-    h2: ({ children }) => <div className="text-[1.25rem] font-bold text-txt-primary mt-2 mb-1">{children}</div>,
-    h3: ({ children }) => <div className="text-[1.1rem] font-bold text-txt-primary mt-1 mb-0.5">{children}</div>,
+    h1: ({ children }) => <div dir="auto" className="text-[1.5rem] font-bold text-txt-primary mt-2 mb-1">{children}</div>,
+    h2: ({ children }) => <div dir="auto" className="text-[1.25rem] font-bold text-txt-primary mt-2 mb-1">{children}</div>,
+    h3: ({ children }) => <div dir="auto" className="text-[1.1rem] font-bold text-txt-primary mt-1 mb-0.5">{children}</div>,
 
     // Horizontal rules
     hr: () => <hr className="border-border-soft my-2" />,
@@ -230,16 +241,17 @@ function buildComponents(): Components {
       </div>
     ),
 
-    // Tables (GFM)
+    // Tables (GFM). The table carries the direction, which also mirrors its
+    // column order for an RTL table; headers align with their cells.
     table: ({ children }) => (
       <div className="overflow-x-auto my-1">
-        <table className="border-collapse text-[0.875rem]">{children}</table>
+        <table dir="auto" className="border-collapse text-[0.875rem]">{children}</table>
       </div>
     ),
     thead: ({ children }) => <thead className="border-b border-border-soft">{children}</thead>,
     tbody: ({ children }) => <tbody>{children}</tbody>,
     tr: ({ children }) => <tr className="border-b border-white/[0.06]">{children}</tr>,
-    th: ({ children }) => <th className="px-3 py-1.5 text-left text-txt-primary font-semibold">{children}</th>,
+    th: ({ children }) => <th className="px-3 py-1.5 text-start text-txt-primary font-semibold">{children}</th>,
     td: ({ children }) => <td className="px-3 py-1.5">{children}</td>,
   };
 }

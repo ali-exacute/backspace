@@ -48,11 +48,15 @@ export const MentionBadge = React.memo(function MentionBadge({ userId, channelId
   const bgColor = color + '1a'; // ~10% opacity hex
   const baseClass = 'inline-flex items-center rounded-[3px] px-[2px] font-medium';
 
+  // The label is isolated in a `<bdi>`: a mention at the start of a message
+  // must not decide that message's paragraph direction (a Latin handle would
+  // otherwise force an Arabic sentence to LTR), and a name in a right-to-left
+  // script still renders in its own direction.
   // Plain text inside another control, and when there is no profile to open.
   if (!interactive || !resolved) {
     return (
       <span className={baseClass} style={{ color, backgroundColor: bgColor }}>
-        @{displayName}
+        <bdi>@{displayName}</bdi>
       </span>
     );
   }
@@ -66,7 +70,7 @@ export const MentionBadge = React.memo(function MentionBadge({ userId, channelId
       className={`${baseClass} cursor-pointer transition-colors hover:brightness-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60`}
       style={{ color, backgroundColor: bgColor }}
     >
-      @{displayName}
+      <bdi>@{displayName}</bdi>
     </button>
   );
 });

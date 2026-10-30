@@ -62,7 +62,7 @@ export function VoiceUserRow({
         className={isSpeaking ? 'rounded-full ring-2 ring-status-online' : ''}
       />
       <span className="text-[13px] text-txt-secondary truncate flex-1 min-w-0">
-        {displayName}
+        <bdi>{displayName}</bdi>
       </span>
       {/* Status badges */}
       <div className="flex items-center gap-1 flex-shrink-0">

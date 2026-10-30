@@ -476,6 +476,7 @@ export function MobileGroupDmInfo({ params }: MobileGroupDmInfoProps) {
               onChange={(e) => setName(e.target.value.slice(0, MAX_NAME_LENGTH))}
               placeholder={fallbackName || t('dm:names.groupFallback')}
               maxLength={MAX_NAME_LENGTH}
+              dir="auto"
               disabled={!isOwner}
               data-mobile-group-name-input
               aria-label={t('dm:groupSettings.nameAria')}
@@ -488,7 +489,7 @@ export function MobileGroupDmInfo({ params }: MobileGroupDmInfoProps) {
                 className="text-xl font-semibold text-txt-primary text-center truncate max-w-[260px]"
                 title={displayName}
               >
-                {displayName}
+                <bdi>{displayName}</bdi>
               </h1>
               {hasFederatedMember && (
                 <span data-mobile-group-globe className="inline-flex" aria-label={t('dm:groupInfo.federated')}>

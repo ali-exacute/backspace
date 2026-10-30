@@ -169,10 +169,10 @@ export function SpaceCard({
 
       {/* Content */}
       <div className="px-4 pt-2 pb-4 flex flex-col flex-1">
-        <h3 className="text-[15px] font-bold text-txt-primary truncate mb-1">{space.name}</h3>
+        <h3 className="text-[15px] font-bold text-txt-primary truncate mb-1"><bdi>{space.name}</bdi></h3>
 
         {space.description ? (
-          <p className="text-[13px] text-txt-secondary line-clamp-2 mb-3 flex-1">
+          <p dir="auto" className="text-[13px] text-txt-secondary line-clamp-2 mb-3 flex-1">
             {space.description}
           </p>
         ) : (

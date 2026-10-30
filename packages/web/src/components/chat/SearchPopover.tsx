@@ -71,13 +71,13 @@ function SearchResultRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-1.5">
           <span className="text-[13px] font-semibold text-txt-primary truncate">
-            {displayName}
+            <bdi>{displayName}</bdi>
           </span>
           <span className="text-[10px] text-txt-tertiary flex-shrink-0">
             {formatTime(msg.createdAt)}
           </span>
         </div>
-        <div className="text-[13px] text-txt-secondary leading-[1.4] line-clamp-2 mt-0.5">
+        <div dir="auto" className="text-[13px] text-txt-secondary leading-[1.4] line-clamp-2 mt-0.5">
           {highlightMatch(messageTextForPreview(msg.content ?? ''), query)}
         </div>
         {msg.attachments && msg.attachments.length > 0 && (

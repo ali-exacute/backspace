@@ -152,7 +152,7 @@ export function DmListItem({ dm, isActive, isUnread, user, onSelect, onClose, on
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1 min-w-0">
           <span className={nameClass}>
-            {displayName}
+            <bdi>{displayName}</bdi>
           </span>
           {showGroupGlobe && (
             <Tooltip content={groupFederatedMembers.map(m => m.username).join(', ')} position="top">
@@ -189,7 +189,7 @@ export function DmListItem({ dm, isActive, isUnread, user, onSelect, onClose, on
           )}
         </div>
         {previewText && (
-          <div className={previewClass}>
+          <div className={previewClass} dir="auto">
             {previewText}
           </div>
         )}

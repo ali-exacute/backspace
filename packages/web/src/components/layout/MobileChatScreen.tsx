@@ -125,7 +125,7 @@ export function MobileChatScreen({ params }: MobileChatScreenProps) {
         </button>
         <div className="flex-1 min-w-0">
           <h1 className="text-sm font-semibold text-txt-primary truncate">
-            {isDm ? channelName : `# ${channelName}`}
+            {isDm ? <bdi>{channelName}</bdi> : <>#{' '}<bdi>{channelName}</bdi></>}
           </h1>
         </div>
         <TransferIndicator />

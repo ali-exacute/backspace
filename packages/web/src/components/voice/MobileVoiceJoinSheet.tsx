@@ -425,7 +425,7 @@ export function MobileVoiceJoinSheet({
 
           {/* Header */}
           <div className="flex items-center justify-between px-5 mb-2">
-            <h2 className="text-base font-bold text-txt-primary truncate">{channelName}</h2>
+            <h2 className="text-base font-bold text-txt-primary truncate"><bdi>{channelName}</bdi></h2>
           </div>
         </div>
 

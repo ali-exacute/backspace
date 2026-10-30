@@ -20,3 +20,19 @@ it('anchors the popup at the typed @ after a displayed mention and mirrors nativ
   fireEvent.scroll(textareaRef.current!, { target: { scrollTop: 22 } });
   expect(anchor.parentElement?.parentElement?.style.transform).toBe('translateY(-22px)');
 });
+
+// The visible text is painted by the mirror while the native textarea holds
+// the caret and selection. Both must resolve the same base direction, or an
+// RTL draft is painted on one side and edited on the other.
+it('lets the mirror and the textarea derive the same direction', () => {
+  const textareaRef = createRef<HTMLTextAreaElement>();
+  const mentionAnchorRef = createRef<HTMLSpanElement>();
+  const model = composerMentions('مرحبا hello', () => null);
+  const { container } = render(<MentionTextarea model={model} textareaRef={textareaRef}
+    mentionAnchorRef={mentionAnchorRef} onChange={vi.fn()} />);
+
+  expect(textareaRef.current!.getAttribute('dir')).toBe('auto');
+  const mirror = container.querySelector('div[aria-hidden="true"] > div');
+  expect(mirror!.getAttribute('dir')).toBe('auto');
+  expect(mirror!.textContent).toBe('مرحبا hello\u200b');
+});

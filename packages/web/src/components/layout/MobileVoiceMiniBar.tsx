@@ -70,7 +70,7 @@ export function MobileVoiceMiniBar() {
           </svg>
         </div>
         <div className="min-w-0">
-          <p className={`text-xs font-medium truncate ${accentClass}`}>{channelName}</p>
+          <p className={`text-xs font-medium truncate ${accentClass}`}><bdi>{channelName}</bdi></p>
           {isReconnecting ? (
             <p className="text-[10px] text-txt-tertiary">{t('voice:status.reconnecting')}</p>
           ) : isDropped ? (

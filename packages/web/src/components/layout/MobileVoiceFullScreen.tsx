@@ -296,10 +296,10 @@ export function MobileVoiceFullScreen() {
         </button>
         <div className="flex-1 min-w-0">
           <h1 className="text-sm font-semibold text-txt-primary truncate">
-            {channelName}
+            <bdi>{channelName}</bdi>
           </h1>
           {spaceName && (
-            <p className="text-[11px] text-txt-tertiary truncate">{spaceName}</p>
+            <p className="text-[11px] text-txt-tertiary truncate"><bdi>{spaceName}</bdi></p>
           )}
         </div>
         <span className="text-xs text-txt-tertiary">

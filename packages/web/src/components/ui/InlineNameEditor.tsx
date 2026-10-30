@@ -124,7 +124,7 @@ export function InlineNameEditor({
     <div className="flex items-center gap-2 text-txt-primary">
       {icon}
       {!canEdit ? (
-        <span className="min-w-0 truncate text-sm font-medium">{name}</span>
+        <span className="min-w-0 truncate text-sm font-medium"><bdi>{name}</bdi></span>
       ) : isEditing ? (
         <form
           ref={formRef}
@@ -169,7 +169,7 @@ export function InlineNameEditor({
           title={editLabel}
           className="group -mx-1 flex min-w-0 items-center gap-1.5 rounded px-1 text-left text-sm font-medium transition-colors hover:bg-interactive-hover"
         >
-          <span className="min-w-0 truncate">{name}</span>
+          <span className="min-w-0 truncate"><bdi>{name}</bdi></span>
           <span className="sr-only">{editLabel}</span>
           <svg
             width="14"

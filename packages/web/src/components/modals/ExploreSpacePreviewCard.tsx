@@ -55,7 +55,7 @@ export function ExploreSpacePreviewCard({
 
         {/* Name + meta */}
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-txt-primary truncate">{space.name}</div>
+          <div className="text-sm font-semibold text-txt-primary truncate"><bdi>{space.name}</bdi></div>
           <div className="flex items-center gap-2 text-[12px] text-txt-tertiary">
             <span>{t('spaces:explore.memberCount', { count: space.memberCount })}</span>
             {originLabel && <span className="truncate text-txt-tertiary/70">· {originLabel}</span>}

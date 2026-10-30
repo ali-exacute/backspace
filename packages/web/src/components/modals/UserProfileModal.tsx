@@ -271,12 +271,12 @@ export function UserProfileModal() {
 
           <div className="mb-3">
             <ProfileSpaceNickname member={memberContext} />
-            <span className="text-[20px] font-bold leading-tight">{displayName}</span>
+            <span className="text-[20px] font-bold leading-tight"><bdi>{displayName}</bdi></span>
             <div className="text-[14px] text-txt-tertiary mt-0.5">
               <Username username={user.username} showAt className="text-[14px] text-txt-tertiary" />
             </div>
             {user.customStatus && (
-              <div className="text-[13px] text-txt-secondary italic mt-1">
+              <div dir="auto" className="text-[13px] text-txt-secondary italic mt-1">
                 {replaceEmojiShortcodes(user.customStatus)}
               </div>
             )}
@@ -440,7 +440,7 @@ export function UserProfileModal() {
                       </div>
                       <div className="min-w-0 flex flex-col">
                         <span className="text-[13px] font-medium text-txt-primary truncate">
-                          {space.name}
+                          <bdi>{space.name}</bdi>
                         </span>
                         {space._instanceOrigin && (
                           <span className="text-[10px] text-txt-tertiary/70 truncate flex items-center gap-1">

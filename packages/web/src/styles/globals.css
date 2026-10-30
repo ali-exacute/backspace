@@ -118,7 +118,11 @@
 
   html, body, #root {
     @apply h-full w-full overflow-hidden bg-surface-base text-txt-message;
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    /* DM Sans carries the Latin text; the faces after the platform stack have
+       Arabic and Hebrew glyphs, so messages in those scripts render from a
+       designed face instead of whatever fallback the OS happens to pick. See
+       docs/systems/design-system.md, "Bidirectional text". */
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Geeza Pro', 'Arial Hebrew', Tahoma, sans-serif;
     font-optical-sizing: auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -127,7 +131,7 @@
 
   :root:lang(ru) body,
   :root:lang(ru) #root {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Geeza Pro', 'Arial Hebrew', Tahoma, sans-serif;
   }
 
   /* Simplified Chinese takes the platform stack outright. Neither DM Sans
@@ -138,7 +142,7 @@
      webfont for the first two and a fallback for the third. */
   :root:lang(zh) body,
   :root:lang(zh) #root {
-    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Segoe UI', 'Microsoft YaHei', system-ui, 'Noto Sans CJK SC', 'Noto Sans SC', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Segoe UI', 'Microsoft YaHei', system-ui, 'Noto Sans CJK SC', 'Noto Sans SC', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Geeza Pro', 'Arial Hebrew', Tahoma, sans-serif;
   }
 
   /* Suppress native text selection and callout on mobile interactive elements.

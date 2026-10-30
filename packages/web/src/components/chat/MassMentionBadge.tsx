@@ -41,9 +41,11 @@ export const MassMentionBadge = React.memo(function MassMentionBadge({ keyword, 
     color = UNRESOLVED_COLOR;
   }
 
+  // Isolated like a person mention: a role or keyword label must not set the
+  // message's paragraph direction.
   return (
     <span className="inline-flex items-center rounded-[3px] px-[2px] font-medium" style={{ color, backgroundColor: color + '1a' }}>
-      @{label}
+      <bdi>@{label}</bdi>
     </span>
   );
 });

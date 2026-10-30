@@ -223,7 +223,7 @@ export function DeleteAccountModal({ isOpen, onClose }: DeleteAccountModalProps)
                   <div className="space-y-3">
                     {ownedSpaces.map(space => (
                       <div key={space.id} className="rounded-lg bg-white/[0.03] border border-white/[0.04] p-3">
-                        <div className="text-sm font-medium text-txt-primary mb-2">{space.name}</div>
+                        <div className="text-sm font-medium text-txt-primary mb-2"><bdi>{space.name}</bdi></div>
                         <div className="flex gap-2 mb-2">
                           <button
                             onClick={() => handleSpaceAction(space.id, 'transfer')}

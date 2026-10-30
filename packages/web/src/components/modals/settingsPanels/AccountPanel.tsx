@@ -368,11 +368,11 @@ export function AccountPanel() {
             <div
               className="font-semibold text-[15px] leading-tight text-txt-primary"
             >
-              {effectiveDisplayName}
+              <bdi>{effectiveDisplayName}</bdi>
             </div>
             <div className="text-[12px] text-txt-tertiary">@{user.username}</div>
             {bio.trim() && (
-              <div className="text-[12px] text-txt-secondary mt-1.5 whitespace-pre-wrap break-words line-clamp-3">
+              <div dir="auto" className="text-[12px] text-txt-secondary mt-1.5 whitespace-pre-wrap break-words line-clamp-3">
                 {bio.trim()}
               </div>
             )}
@@ -603,6 +603,7 @@ export function AccountPanel() {
                   if (e.target.value.length <= BIO_MAX_LENGTH) setBio(e.target.value);
                 }}
                 rows={3}
+                dir="auto"
                 placeholder={t('settings:account.profile.bio.placeholder')}
                 className="input-standard w-full resize-none"
                 maxLength={BIO_MAX_LENGTH}

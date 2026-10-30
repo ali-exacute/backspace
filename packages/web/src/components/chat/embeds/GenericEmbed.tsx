@@ -30,12 +30,13 @@ export function GenericEmbed({ embed }: GenericEmbedProps) {
           href={embed.url}
           target="_blank"
           rel="noopener noreferrer"
+          dir="auto"
           className="text-[16px] text-sky-400 font-semibold hover:underline block mb-2 truncate"
         >
           {embed.title}
         </a>
         {embed.description && (
-          <div className="text-[14px] text-txt-message leading-[1.125rem] line-clamp-3">
+          <div dir="auto" className="text-[14px] text-txt-message leading-[1.125rem] line-clamp-3">
             {embed.description}
           </div>
         )}

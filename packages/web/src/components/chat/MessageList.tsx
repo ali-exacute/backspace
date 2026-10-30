@@ -1340,7 +1340,7 @@ function WelcomeHeader({ channelId }: { channelId: string }) {
           <div className="mb-2">
             <AvatarStack members={otherMembers} origin={viewer.origin} size={80} border="chat" iconUrl={dm.icon} />
           </div>
-          <h3 className="text-[32px] leading-10 font-bold text-txt-primary mt-2">{groupName}</h3>
+          <h3 className="text-[32px] leading-10 font-bold text-txt-primary mt-2"><bdi>{groupName}</bdi></h3>
           <p className="text-txt-secondary text-[14px] mt-1">
             {t('chat:list.welcome.group.intro')}
           </p>
@@ -1402,7 +1402,7 @@ function WelcomeHeader({ channelId }: { channelId: string }) {
         <div className="mb-2">
           <ProfileAvatar src={otherUser?.avatar} name={displayName} size={80} user={otherUser ?? undefined} origin={viewer.origin} />
         </div>
-        <h3 className="text-[32px] leading-10 font-bold text-txt-primary">{displayName}</h3>
+        <h3 className="text-[32px] leading-10 font-bold text-txt-primary"><bdi>{displayName}</bdi></h3>
         <p className="text-txt-secondary text-[14px] mt-1">
           <Trans
             t={t}

@@ -35,7 +35,10 @@ export function MentionTextarea({ model, textareaRef, mentionAnchorRef, mentionS
   }, [textareaRef, model.text]);
   return <div className="relative flex-1 min-w-0">
     <div aria-hidden="true" className="absolute inset-0 overflow-hidden pointer-events-none">
-      <div ref={mirrorRef} className="py-[10px] px-1 text-[15px] leading-[1.375rem] text-txt-primary whitespace-pre-wrap break-words">
+      {/* The mirror and the textarea carry the same `dir="auto"`: the visible
+          text and the native caret/selection must resolve one direction, or
+          an RTL draft would paint on one side and be edited on the other. */}
+      <div ref={mirrorRef} dir="auto" className="py-[10px] px-1 text-[15px] leading-[1.375rem] text-txt-primary whitespace-pre-wrap break-words">
         {model.parts.map((part, index) => {
           const offset = anchor - part.start;
           const content = offset >= 0 && offset < part.text.length
@@ -47,7 +50,7 @@ export function MentionTextarea({ model, textareaRef, mentionAnchorRef, mentionS
     </div>
     {/* The mirror paints the text; the textarea keeps only its caret,
         selection and placeholder. */}
-    <textarea {...props} ref={textareaRef} value={model.text}
+    <textarea {...props} ref={textareaRef} value={model.text} dir="auto"
       className={`${props.className ?? ''} text-transparent caret-txt-primary`}
       onScroll={event => {
         if (mirrorRef.current) mirrorRef.current.style.transform = 'translateY(-' + event.currentTarget.scrollTop + 'px)';

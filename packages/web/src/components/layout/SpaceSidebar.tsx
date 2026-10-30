@@ -478,7 +478,7 @@ function FolderFlyout({
               </div>
 
               {/* Name */}
-              <span className="text-sm text-txt-primary truncate flex-1 text-left">{space.name}</span>
+              <span className="text-sm text-txt-primary truncate flex-1 text-left"><bdi>{space.name}</bdi></span>
 
               {/* Federation badge */}
               {isFederated && !isDimmed && (

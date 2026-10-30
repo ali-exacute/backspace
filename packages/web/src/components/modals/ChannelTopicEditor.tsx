@@ -61,7 +61,7 @@ export function ChannelTopicEditor({ topic, canEdit, onSave }: ChannelTopicEdito
           {t('spaces:channel.settings.topic.label')}
         </span>
         {topic ? (
-          <p className="text-sm text-txt-secondary whitespace-pre-wrap break-words">{topic}</p>
+          <p dir="auto" className="text-sm text-txt-secondary whitespace-pre-wrap break-words">{topic}</p>
         ) : (
           <p className="text-sm text-txt-tertiary">{t('spaces:channel.settings.topic.empty')}</p>
         )}
@@ -116,6 +116,7 @@ export function ChannelTopicEditor({ topic, canEdit, onSave }: ChannelTopicEdito
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={handleKeyDown}
         readOnly={isSaving}
+        dir="auto"
         rows={3}
         maxLength={Math.max(CHANNEL_TOPIC_MAX_LENGTH, draft.length)}
         placeholder={t('spaces:channel.settings.topic.placeholder')}

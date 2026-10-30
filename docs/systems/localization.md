@@ -283,6 +283,20 @@ Changing the language:
 The choice is per device, not per account. It is not synced to the server;
 a user's language is a property of the machine in front of them.
 
+### Direction of user content
+
+The `dir` above is the direction of the **interface**. User-generated text is not
+localized and does not follow it: message bodies, bios, topics, previews, embed
+metadata and display names declare their own direction — `dir="auto"` for prose,
+`<bdi>` for a single inline value, `dir="ltr"` for code — so an Arabic or Hebrew
+sentence reads correctly inside an English UI. See `design-system.md`,
+"Bidirectional text", for the full convention.
+
+Names interpolated into a localized sentence (DM/system messages, "Sent by
+{name}", "shown as {nickname}") remain plain string interpolation and are not
+isolated. Converting those to `Trans` with a `<bdi>` around the value is the
+fix when one of those surfaces needs it.
+
 ---
 
 ## Server errors

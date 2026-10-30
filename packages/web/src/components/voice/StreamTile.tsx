@@ -498,7 +498,7 @@ export function StreamTile({ tile, large, stats }: StreamTileProps) {
           <span
             className={`font-semibold text-white truncate ${large ? 'text-base' : 'text-[13px]'}`}
           >
-            {displayName}
+            <bdi>{displayName}</bdi>
           </span>
           {isLocal && (
             <span className="text-[10px] text-white/40 font-medium">{t('voice:badges.you')}</span>

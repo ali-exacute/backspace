@@ -430,6 +430,7 @@ export function GroupDmSettings() {
           value={name}
           onChange={(e) => setName(e.target.value.slice(0, MAX_NAME_LENGTH))}
           placeholder={fallbackName || t('dm:names.groupFallback')}
+          dir="auto"
           disabled={!isOwner}
           maxLength={MAX_NAME_LENGTH}
           className="input-standard w-full"
@@ -588,7 +589,7 @@ export function GroupDmSettings() {
               iconUrl={dmChannel.icon}
             />
             <div className="min-w-0">
-              <div className="text-sm font-medium text-txt-primary truncate">{headerName}</div>
+              <div className="text-sm font-medium text-txt-primary truncate"><bdi>{headerName}</bdi></div>
             </div>
           </div>
 
@@ -618,7 +619,7 @@ export function GroupDmSettings() {
                 iconUrl={dmChannel.icon}
               />
               <div className="min-w-0">
-                <div className="text-sm font-medium text-txt-primary truncate">{headerName}</div>
+                <div className="text-sm font-medium text-txt-primary truncate"><bdi>{headerName}</bdi></div>
               </div>
             </div>
 

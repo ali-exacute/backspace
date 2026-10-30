@@ -177,4 +177,51 @@ describe('MarkdownRenderer', () => {
     const { container } = render(<MarkdownRenderer content={'at 10:30:00 on fe80::a:b:c:d'} />);
     expect(container.textContent).toBe('at 10:30:00 on fe80::a:b:c:d');
   });
+
+  // Bidirectional text. User text carries no direction of its own, so each
+  // paragraph asks the browser to derive one; code is the exception and must
+  // stay left to right whatever surrounds it.
+  describe('bidirectional text', () => {
+    it('lets each prose block derive its own base direction', () => {
+      const { container } = render(
+        <MarkdownRenderer content={'مرحبا hello\n\nhello مرحبا\n\n# عنوان\n\n> اقتباس\n\n- عنصر'} />,
+      );
+
+      for (const el of container.querySelectorAll('[dir="auto"]')) {
+        expect(el.tagName.toLowerCase()).toMatch(/^(span|div|blockquote|ul|ol)$/);
+      }
+      expect(container.querySelectorAll('[dir="auto"]').length).toBeGreaterThanOrEqual(6);
+    });
+
+    it('keeps inline code and fenced blocks left to right', () => {
+      const { container } = render(
+        <MarkdownRenderer content={'مرحبا `npm i`\n\n```js\nconst x = 1;\n```\n\n```\nplain\n```'} />,
+      );
+
+      const inline = container.querySelector('code[dir="ltr"]');
+      expect(inline).not.toBeNull();
+      expect(inline!.textContent).toBe('npm i');
+      for (const pre of Array.from(container.querySelectorAll('pre'))) {
+        expect(pre.getAttribute('dir')).toBe('ltr');
+      }
+    });
+
+    it('isolates a mention so it cannot set the paragraph direction', () => {
+      const { container } = render(<MarkdownRenderer content={'<@U1> مرحبا'} />);
+
+      const paragraph = container.querySelector('[dir="auto"]')!;
+      expect(paragraph.querySelector('bdi')!.textContent).toBe('@Unknown User');
+    });
+
+    it('gives a table its own direction and aligns headers with their cells', () => {
+      const { container } = render(
+        <MarkdownRenderer content={'| اسم | b |\n| --- | --- |\n| ج | d |'} />,
+      );
+
+      expect(container.querySelector('table')!.getAttribute('dir')).toBe('auto');
+      for (const th of Array.from(container.querySelectorAll('th'))) {
+        expect(th.className).toContain('text-start');
+      }
+    });
+  });
 });

@@ -30,7 +30,7 @@ export function ChannelHeaderTopic({ channelName, topic }: ChannelHeaderTopicPro
         className="min-w-0 truncate rounded-[4px] px-1 -mx-1 text-left text-[13px] leading-tight text-txt-tertiary transition-colors hover:text-txt-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
       >
         <span className="sr-only">{t('main.topic.show')}</span>{' '}
-        {topic}
+        <bdi>{topic}</bdi>
       </button>
       <Modal
         isOpen={isOpen}
@@ -39,7 +39,7 @@ export function ChannelHeaderTopic({ channelName, topic }: ChannelHeaderTopicPro
         maxWidth="max-w-lg"
         mobileStyle="sheet"
       >
-        <p className="text-sm text-txt-secondary whitespace-pre-wrap break-words">{topic}</p>
+        <p dir="auto" className="text-sm text-txt-secondary whitespace-pre-wrap break-words">{topic}</p>
       </Modal>
     </>
   );

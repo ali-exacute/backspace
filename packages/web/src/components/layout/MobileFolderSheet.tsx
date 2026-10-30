@@ -157,7 +157,7 @@ export function MobileFolderSheet({ folder, onClose, onSelectSpace, onUpdateFold
                     <span className="text-xs font-bold text-white">{space.name.charAt(0).toUpperCase()}</span>
                   )}
                 </div>
-                <span className="text-sm text-txt-primary truncate">{space.name}</span>
+                <span className="text-sm text-txt-primary truncate"><bdi>{space.name}</bdi></span>
               </button>
             );
           })}

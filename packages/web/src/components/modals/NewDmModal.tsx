@@ -29,7 +29,7 @@ function NewDmUserRow({
       <Avatar src={canonical.avatar} name={displayName} size={36} status={canonical.status as any} userId={canonical.homeUserId ?? canonical.id} avatarColor={canonical.avatarColor} />
       <div className="flex-1 min-w-0">
         <div className="text-[14px] font-medium text-txt-primary truncate">
-          {displayName}
+          <bdi>{displayName}</bdi>
         </div>
         <div className="text-[12px] text-txt-tertiary truncate">@{canonical.username}</div>
       </div>

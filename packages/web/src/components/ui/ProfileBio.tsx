@@ -12,9 +12,12 @@ import { useEmojiShortcodeNames } from '../../utils/emojiShortcodes';
 
 const ALLOWED_ELEMENTS = ['p', 'strong', 'em', 'del', 'a', 'br'];
 const REMARK_PLUGINS = [remarkGfm, remarkEmojiShortcodes];
+// A bio is prose from the person who wrote it: each paragraph takes its own
+// base direction (`dir="auto"`), and a link is isolated like one in a message.
 const COMPONENTS: Components = {
+  p: ({ children }) => <p dir="auto">{children}</p>,
   a: ({ href, children }) => (
-    <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>
+    <a href={href} target="_blank" rel="noopener noreferrer" dir="auto">{children}</a>
   ),
 };
 

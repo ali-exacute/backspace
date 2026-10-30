@@ -204,7 +204,7 @@ export function DmMemberRow({
               isOffline ? 'text-txt-tertiary' : 'text-txt-primary'
             }`}
           >
-            {displayName}
+            <bdi>{displayName}</bdi>
           </span>
           {showGlobe && (
             <Tooltip content={canonical.username} position="top">

@@ -89,6 +89,7 @@ export function VideoEmbed({ embed }: VideoEmbedProps) {
               href={embed.url}
               target="_blank"
               rel="noopener noreferrer"
+              dir="auto"
               className="text-[14px] text-sky-400 font-semibold hover:underline line-clamp-2"
             >
               {embed.title}

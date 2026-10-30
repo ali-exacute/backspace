@@ -145,7 +145,7 @@ function MobileDmRow({
         <div className="flex items-center justify-between gap-2">
           <span className="flex items-center gap-1 min-w-0">
             <span className={`text-sm truncate ${isUnread ? 'font-semibold text-txt-primary' : 'text-txt-primary'}`}>
-              {name}
+              <bdi>{name}</bdi>
             </span>
             {groupHasFederatedMember && (
               <svg
@@ -173,7 +173,7 @@ function MobileDmRow({
           </div>
         )}
         {preview && (
-          <p className={`text-xs truncate mt-0.5 ${isUnread ? 'text-txt-secondary font-medium' : 'text-txt-tertiary'}`}>
+          <p dir="auto" className={`text-xs truncate mt-0.5 ${isUnread ? 'text-txt-secondary font-medium' : 'text-txt-tertiary'}`}>
             {preview}
           </p>
         )}

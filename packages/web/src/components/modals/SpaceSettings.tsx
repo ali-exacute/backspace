@@ -675,7 +675,7 @@ export function SpaceSettingsModal() {
               palette="space"
             />
             <div className="min-w-0">
-              <div className="text-sm font-medium text-txt-primary truncate">{space.name}</div>
+              <div className="text-sm font-medium text-txt-primary truncate"><bdi>{space.name}</bdi></div>
             </div>
           </div>
 
@@ -713,7 +713,7 @@ export function SpaceSettingsModal() {
                 palette="space"
               />
               <div className="min-w-0">
-                <div className="text-sm font-medium text-txt-primary truncate">{space.name}</div>
+                <div className="text-sm font-medium text-txt-primary truncate"><bdi>{space.name}</bdi></div>
               </div>
             </div>
 

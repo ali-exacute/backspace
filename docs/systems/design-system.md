@@ -3,7 +3,7 @@
 Prototype (source of truth): `Backspace-design-prototype.html` (open in browser)
 Styles: `packages/web/src/styles/globals.css`
 Theme: `packages/web/tailwind.config.js`
-Fonts: DM Sans by default; Inter for the Russian UI; the platform CJK stack for Chinese; system fallbacks (see `docs/systems/localization.md`, "The landing page")
+Fonts: DM Sans by default; Inter for the Russian UI; the platform CJK stack for Chinese; Arabic and Hebrew fall through to the platform RTL faces; system fallbacks (see `docs/systems/localization.md`, "The landing page")
 
 ---
 
@@ -14,6 +14,48 @@ Fonts: DM Sans by default; Inter for the Russian UI; the platform CJK stack for 
 - Two-material system: solid matte panels for content (75%), frosted glass bubbles for persistent controls (25%)
 - `prefers-reduced-transparency` → fall back to solid surfaces
 - NOT a Discord clone — Backspace has its own visual identity
+
+## Bidirectional text
+
+User text carries its own direction; the interface does not. A message, bio,
+topic, description or preview is prose from an unknown author, so every block
+that shows it sets `dir="auto"`. The browser derives the base direction — and
+with it the alignment — from the first strong character, and the attribute also
+isolates the element so it does not drag its neighbours into its own order.
+
+| Surface | Treatment |
+|---|---|
+| Prose blocks: `MarkdownRenderer` paragraphs, headings, quotes, lists and tables; `ProfileBio`; channel topics; DM sidebar previews; search snippets; embed titles and descriptions | `dir="auto"` |
+| Code, inline and fenced | `dir="ltr"` — it is code, not prose, and `dir` isolates it as well |
+| Single inline values: display names, mentions, space and channel names | `<bdi>`, or `dir="auto"` where the name is the element itself — both isolate and auto-detect without reordering the row |
+| Layout *inside* a prose block | logical properties: `ps-`/`pe-`, `border-s-`, `text-start` |
+
+`dir="auto"` skips descendants that carry their own `dir` or that are `<bdi>`,
+which is why mentions and names are isolated: a message that opens with `@Ali`
+or a URL must still derive its direction from the Arabic sentence that follows.
+
+Each block decides on its own. A list carries its direction (markers and their
+inset stay on one side) and its items inherit it; a paragraph nested inside an
+item still re-derives its own, so a deliberately mixed-direction list can align
+one item's text away from the list's markers. That trade is preferred to
+forcing every paragraph of a message into a single direction.
+
+The composer follows the same rule. `MentionTextarea` paints the visible text in
+a mirror behind a transparent native textarea, so both carry `dir="auto"`; they
+hold the same text and must resolve the same direction, or an RTL draft would be
+painted on one side and its caret and selection edited on the other.
+
+The shell stays LTR. Scrollbars, navigation, sidebar icons and hover controls do
+not mirror, and no content surface sets `dir="rtl"` on a wrapper. Mirroring the
+shell is a separate job that belongs with an RTL **UI** language
+(`supportedLanguages[].dir` in `packages/web/src/i18n/languages.ts`), not with
+the direction of user content.
+
+Fonts: DM Sans and the bundled Inter subset have no Arabic or Hebrew glyphs, so
+the content stacks name the platform faces that do — `Segoe UI`,
+`Noto Sans Arabic`, `Noto Sans Hebrew`, `Geeza Pro`, `Arial Hebrew`, Tahoma —
+before `sans-serif`. Latin still resolves to DM Sans (or Inter under
+`:lang(ru)`); only the missing scripts fall through.
 
 ## Settings organization
 

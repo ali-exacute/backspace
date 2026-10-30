@@ -90,7 +90,7 @@ function PersonName({ name, person, className, style }: {
   style?: React.CSSProperties;
 }) {
   return (
-    <span className={`inline-flex items-center gap-0.5 ${className}`} style={style}>
+    <span dir="auto" className={`inline-flex items-center gap-0.5 ${className}`} style={style}>
       {name}
       {isFederationGlobeApplicable(person) && (
         <Tooltip content={person.username} position="top">
@@ -550,7 +550,7 @@ export function Message({ message, isCompact, isFirstInGroup, previousMessageId 
                 className="text-[14px] font-bold text-txt-primary"
                 style={replyRoleColor(replyTo)}
               />
-              <span className="text-[14px] text-txt-message truncate max-w-[400px] group-hover/reply:text-txt-primary transition-colors">
+              <span className="text-[14px] text-txt-message truncate max-w-[400px] group-hover/reply:text-txt-primary transition-colors" dir="auto">
                 {replyTo.content ? <InlineMessageText content={replyTo.content} channelId={mentionChannelId} /> : ''}
               </span>
             </>
@@ -601,6 +601,7 @@ export function Message({ message, isCompact, isFirstInGroup, previousMessageId 
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
               onKeyDown={handleEditSubmit}
+              dir="auto"
               className="input-standard w-full p-3 rounded-lg resize-none text-[15px] leading-[1.5] shadow-inner"
               rows={2}
               autoFocus
@@ -654,7 +655,7 @@ export function Message({ message, isCompact, isFirstInGroup, previousMessageId 
             ) : (
               <>
                 {message.content && (
-                  <div className="text-txt-message text-[15px] leading-[1.5] break-words whitespace-pre-wrap selection:bg-accent-primary/30">
+                  <div dir="auto" className="text-txt-message text-[15px] leading-[1.5] break-words whitespace-pre-wrap selection:bg-accent-primary/30">
                     {isSticker
                       ? <StickerMessage token={message.content} />
                       : <MarkdownRenderer content={message.content} channelId={mentionChannelId} />}

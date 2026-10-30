@@ -53,6 +53,7 @@ function MentionMemberRow({
           box, so a username squeezed to nothing takes its gap with it. */}
       <div className="flex items-center min-w-0 flex-1">
         <span
+          dir="auto"
           className={`${mobile ? 'text-[15px]' : 'text-[14px]'} font-medium shrink-0 max-w-full truncate`}
           style={roleColor ? { color: roleColor } : undefined}
         >

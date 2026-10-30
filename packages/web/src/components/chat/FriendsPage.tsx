@@ -812,7 +812,7 @@ function UserDiscoverCard({
       {/* Content */}
       <div className="px-4 pt-1.5 pb-3.5 flex flex-col flex-1">
         <button onClick={handleOpenProfile} className="text-left group">
-          <h3 className="text-[14px] font-bold text-txt-primary truncate group-hover:underline">{displayName}</h3>
+          <h3 className="text-[14px] font-bold text-txt-primary truncate group-hover:underline"><bdi>{displayName}</bdi></h3>
           <p className="text-[12px] text-txt-tertiary truncate">@{user.username}</p>
         </button>
 

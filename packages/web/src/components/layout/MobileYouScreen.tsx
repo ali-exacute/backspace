@@ -129,7 +129,7 @@ export function MobileYouScreen() {
         {/* User info */}
         <div className="px-4 pb-4 pt-2">
           <h2 className="text-lg font-bold text-txt-primary">
-            {user.displayName ?? user.username}
+            <bdi>{user.displayName ?? user.username}</bdi>
           </h2>
           <p className="text-sm text-txt-secondary">@{user.username}</p>
           {(() => {

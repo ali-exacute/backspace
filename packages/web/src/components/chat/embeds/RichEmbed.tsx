@@ -68,12 +68,12 @@ export function RichEmbed({ embed }: RichEmbedProps) {
                 </div>
               )}
               {embed.title && (
-                <div className="text-[14px] text-sky-400 font-semibold group-hover:underline line-clamp-2">
+                <div dir="auto" className="text-[14px] text-sky-400 font-semibold group-hover:underline line-clamp-2">
                   {embed.title}
                 </div>
               )}
               {embed.description && (
-                <div className="text-[13px] text-txt-secondary mt-1 line-clamp-2">
+                <div dir="auto" className="text-[13px] text-txt-secondary mt-1 line-clamp-2">
                   {embed.description}
                 </div>
               )}
